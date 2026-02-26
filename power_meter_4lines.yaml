@@ -1,0 +1,171 @@
+esphome:
+  name: power-meter-4lines
+  friendly_name: Power Meter 4 Lines
+  platform: ESP32
+  board: esp32dev
+  includes:
+    - power_meter_ads1115_4lines.h
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: bus_a
+
+ads1115:
+  - address: 0x48
+    id: ads_current
+    continuous_mode: true
+    i2c_id: bus_a
+  - address: 0x49
+    id: ads_voltage
+    continuous_mode: true
+    i2c_id: bus_a
+
+sensor:
+  - platform: custom
+    lambda: |-
+      const float mains_freq = 50.0f;
+      const uint16_t periods = 20;
+
+      // Стартовые коэффициенты, потом откалибруете по реальным измерениям:
+      const float current_scale = 30.0f;   // А на 1 В входа ADS
+      const float voltage_scale = 230.0f;  // В сети на 1 В входа ADS
+
+      static PowerMeter4Lines *pm = new PowerMeter4Lines(
+        id(ads_current),
+        id(ads_voltage),
+        mains_freq,
+        periods,
+        current_scale,
+        voltage_scale
+      );
+      App.register_component(pm);
+
+      return {
+        pm->line1_current, pm->line1_voltage, pm->line1_power_import, pm->line1_power_export,
+        pm->line1_energy_import, pm->line1_energy_export,
+
+        pm->line2_current, pm->line2_voltage, pm->line2_power_import, pm->line2_power_export,
+        pm->line2_energy_import, pm->line2_energy_export,
+
+        pm->line3_current, pm->line3_voltage, pm->line3_power_import, pm->line3_power_export,
+        pm->line3_energy_import, pm->line3_energy_export,
+
+        pm->line4_current, pm->line4_voltage, pm->line4_power_import, pm->line4_power_export,
+        pm->line4_energy_import, pm->line4_energy_export
+      };
+
+    sensors:
+      # L1
+      - name: "L1 Current"
+        unit_of_measurement: "A"
+        accuracy_decimals: 3
+      - name: "L1 Voltage"
+        unit_of_measurement: "V"
+        accuracy_decimals: 1
+      - name: "L1 Power Import"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L1 Power Export"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L1 Energy Import"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+      - name: "L1 Energy Export"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+
+      # L2
+      - name: "L2 Current"
+        unit_of_measurement: "A"
+        accuracy_decimals: 3
+      - name: "L2 Voltage"
+        unit_of_measurement: "V"
+        accuracy_decimals: 1
+      - name: "L2 Power Import"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L2 Power Export"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L2 Energy Import"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+      - name: "L2 Energy Export"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+
+      # L3
+      - name: "L3 Current"
+        unit_of_measurement: "A"
+        accuracy_decimals: 3
+      - name: "L3 Voltage"
+        unit_of_measurement: "V"
+        accuracy_decimals: 1
+      - name: "L3 Power Import"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L3 Power Export"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L3 Energy Import"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+      - name: "L3 Energy Export"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+
+      # L4
+      - name: "L4 Current"
+        unit_of_measurement: "A"
+        accuracy_decimals: 3
+      - name: "L4 Voltage"
+        unit_of_measurement: "V"
+        accuracy_decimals: 1
+      - name: "L4 Power Import"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L4 Power Export"
+        unit_of_measurement: "W"
+        accuracy_decimals: 1
+      - name: "L4 Energy Import"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+      - name: "L4 Energy Export"
+        unit_of_measurement: "kWh"
+        accuracy_decimals: 3
+        device_class: energy
+        state_class: total_increasing
+
+time:
+  - platform: sntp
+    id: sntp_time
+
