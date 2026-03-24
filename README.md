@@ -35,6 +35,76 @@
   - качества CT 100 A и правильного выбора бёрден‑резистора;
   - качества модулей ZMPT101B и их подстройки;
   - аккуратной калибровки коэффициентов `current_scale` и `voltage_scale`.
+ 
+    
+# ⚡ ESP32 4-Channel Precision Power Meter (ESPHome)
+
+High-precision 4-channel power monitoring system using **ESP32** and dual **16-bit ADS1115** ADCs. Designed for measuring Real Active Power (Import/Export), RMS Voltage, and RMS Current with waveform analysis.
+
+---
+
+## 🚀 Key Features
+
+*   **4 Independent Lines**: Simultaneous monitoring of four 220V AC lines.
+*   **Directional Monitoring**: Real-time detection of energy flow (**Import** vs **Export**) — perfect for solar and grid-tie inverter systems.
+*   **High-Speed External ADC**: Uses two **ADS1115** (I2C) to bypass the non-linear internal ESP32 ADC.
+*   **Advanced Logic**: Implements Covariance-based calculation ($P \approx Cov(U, I)$) to account for Power Factor ($\cos \phi$).
+*   **ESPHome Native**: Easy integration with Home Assistant via a custom C++ component.
+
+---
+
+## 🛠 Hardware Architecture
+
+
+| Component | Model | Purpose |
+| :--- | :--- | :--- |
+| **MCU** | `ESP32 WROOM-32E` | System core & Wi-Fi connectivity |
+| **ADC 1** | `ADS1115 (0x48)` | 4-channel Current (I) sampling |
+| **ADC 2** | `ADS1115 (0x49)` | 4-channel Voltage (U) sampling |
+| **Current Sensors** | `SCT-013-000` | 100A Current Transformers (CT) |
+| **Voltage Sensors** | `ZMPT101B` | AC Voltage Transformer Modules |
+
+---
+
+## 📐 Measurement Logic
+
+Unlike basic power meters that simply multiply $V_{rms} \times I_{rms}$, this project samples the actual waveform $U(t)$ and $I(t)$ over **20 grid periods** (400ms @ 50Hz).
+
+### Core Calculations:
+1.  **RMS Voltage/Current**: Derived from the variance of samples.
+2.  **Active Power ($P$):** Calculated using **Covariance**:  
+    $P \approx Cov(U, I) \cdot K_U \cdot K_I$  
+    *Where $K_U$ and $K_I$ are calibration coefficients.*
+3.  **Flow Direction**: The sign of the covariance identifies if energy is being consumed from the grid or returned by an inverter.
+
+### Accuracy Estimates:
+*   **Current**: ~2–3% (range 0.1A to 32A).
+*   **Voltage**: 1–2% (limited by ZMPT101B linearity).
+*   **Active Power**: 3–5% compared to commercial reference meters.
+
+---
+
+## 📂 Project Structure
+
+*   `power_meter_4lines.yaml` — Main ESPHome configuration.
+*   `power_meter_ads1115_4lines.h` — Custom C++ class for high-speed sampling.
+*   `README.md` — Project documentation.
+
+---
+
+## ⚙️ Installation & Calibration
+
+### 1. Hardware Setup
+*   Connect both **ADS1115** to the same I2C bus ($SDA/SCL$).
+*   Set **ADC 1** address to `0x48` (ADDR to GND).
+*   Set **ADC 2** address to `0x49` (ADDR to VCC).
+*   Adjust **ZMPT101B** potentiometers to ensure the 220V sine wave fits within the ADC range (avoid clipping at peak voltage).
+
+### 2. Software Setup
+Copy the files to your ESPHome directory and flash the device:
+```bash
+esphome run power_meter_4lines.yaml
+
 
 ### Пины ESP32 и подключение I2C / ADS1115
 
