@@ -219,4 +219,4 @@ class PowerMeter4Lines : public PollingComponent {
   float energy_import_kwh_[4] = {0, 0, 0, 0};
   float energy_export_kwh_[4] = {0, 0, 0, 0};
 };
-
+static PowerMeter4Lines *global_power_meter{nullptr};
