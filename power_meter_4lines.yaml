@@ -1,10 +1,26 @@
 esphome:
   name: power-meter-4lines
   friendly_name: Power Meter 4 Lines
-  platform: ESP32
-  board: esp32dev
   includes:
     - power_meter_ads1115_4lines.h
+  on_boot:
+    - priority: 600
+      then:
+        - lambda: |-
+            // Создаем объект и сохраняем его в глобальную C++ переменную,
+            // которая объявлена в .h файле
+            global_power_meter = new PowerMeter4Lines(
+              id(ads_current),
+              id(ads_voltage),
+              50.0f, 20, 30.0f, 230.0f
+            );
+            global_power_meter->setup();
+            App.register_component_(global_power_meter); 
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
@@ -35,135 +51,149 @@ ads1115:
     i2c_id: bus_a
 
 sensor:
-  - platform: custom
-    lambda: |-
-      const float mains_freq = 50.0f;
-      const uint16_t periods = 20;
+  # === LINE 1 ===
+  - platform: template
+    name: "L1 Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 3
+    lambda: "return global_power_meter ? global_power_meter->line1_current->state : NAN;"
+  - platform: template
+    name: "L1 Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line1_voltage->state : NAN;"
+  - platform: template
+    name: "L1 Power Import"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line1_power_import->state : NAN;"
+  - platform: template
+    name: "L1 Power Export"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line1_power_export->state : NAN;"
+  - platform: template
+    name: "L1 Energy Import"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line1_energy_import->state : NAN;"
+  - platform: template
+    name: "L1 Energy Export"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line1_energy_export->state : NAN;"
 
-      // Стартовые коэффициенты, потом откалибруете по реальным измерениям:
-      const float current_scale = 30.0f;   // А на 1 В входа ADS
-      const float voltage_scale = 230.0f;  // В сети на 1 В входа ADS
+  # === LINE 2 ===
+  - platform: template
+    name: "L2 Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 3
+    lambda: "return global_power_meter ? global_power_meter->line2_current->state : NAN;"
+  - platform: template
+    name: "L2 Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line2_voltage->state : NAN;"
+  - platform: template
+    name: "L2 Power Import"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line2_power_import->state : NAN;"
+  - platform: template
+    name: "L2 Power Export"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line2_power_export->state : NAN;"
+  - platform: template
+    name: "L2 Energy Import"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line2_energy_import->state : NAN;"
+  - platform: template
+    name: "L2 Energy Export"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line2_energy_export->state : NAN;"
 
-      static PowerMeter4Lines *pm = new PowerMeter4Lines(
-        id(ads_current),
-        id(ads_voltage),
-        mains_freq,
-        periods,
-        current_scale,
-        voltage_scale
-      );
-      App.register_component(pm);
+  # === LINE 3 ===
+  - platform: template
+    name: "L3 Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 3
+    lambda: "return global_power_meter ? global_power_meter->line3_current->state : NAN;"
+  - platform: template
+    name: "L3 Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line3_voltage->state : NAN;"
+  - platform: template
+    name: "L3 Power Import"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line3_power_import->state : NAN;"
+  - platform: template
+    name: "L3 Power Export"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line3_power_export->state : NAN;"
+  - platform: template
+    name: "L3 Energy Import"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line3_energy_import->state : NAN;"
+  - platform: template
+    name: "L3 Energy Export"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line3_energy_export->state : NAN;"
 
-      return {
-        pm->line1_current, pm->line1_voltage, pm->line1_power_import, pm->line1_power_export,
-        pm->line1_energy_import, pm->line1_energy_export,
-
-        pm->line2_current, pm->line2_voltage, pm->line2_power_import, pm->line2_power_export,
-        pm->line2_energy_import, pm->line2_energy_export,
-
-        pm->line3_current, pm->line3_voltage, pm->line3_power_import, pm->line3_power_export,
-        pm->line3_energy_import, pm->line3_energy_export,
-
-        pm->line4_current, pm->line4_voltage, pm->line4_power_import, pm->line4_power_export,
-        pm->line4_energy_import, pm->line4_energy_export
-      };
-
-    sensors:
-      # L1
-      - name: "L1 Current"
-        unit_of_measurement: "A"
-        accuracy_decimals: 3
-      - name: "L1 Voltage"
-        unit_of_measurement: "V"
-        accuracy_decimals: 1
-      - name: "L1 Power Import"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L1 Power Export"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L1 Energy Import"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-      - name: "L1 Energy Export"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-
-      # L2
-      - name: "L2 Current"
-        unit_of_measurement: "A"
-        accuracy_decimals: 3
-      - name: "L2 Voltage"
-        unit_of_measurement: "V"
-        accuracy_decimals: 1
-      - name: "L2 Power Import"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L2 Power Export"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L2 Energy Import"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-      - name: "L2 Energy Export"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-
-      # L3
-      - name: "L3 Current"
-        unit_of_measurement: "A"
-        accuracy_decimals: 3
-      - name: "L3 Voltage"
-        unit_of_measurement: "V"
-        accuracy_decimals: 1
-      - name: "L3 Power Import"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L3 Power Export"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L3 Energy Import"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-      - name: "L3 Energy Export"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-
-      # L4
-      - name: "L4 Current"
-        unit_of_measurement: "A"
-        accuracy_decimals: 3
-      - name: "L4 Voltage"
-        unit_of_measurement: "V"
-        accuracy_decimals: 1
-      - name: "L4 Power Import"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L4 Power Export"
-        unit_of_measurement: "W"
-        accuracy_decimals: 1
-      - name: "L4 Energy Import"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
-      - name: "L4 Energy Export"
-        unit_of_measurement: "kWh"
-        accuracy_decimals: 3
-        device_class: energy
-        state_class: total_increasing
+  # === LINE 4 ===
+  - platform: template
+    name: "L4 Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 3
+    lambda: "return global_power_meter ? global_power_meter->line4_current->state : NAN;"
+  - platform: template
+    name: "L4 Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line4_voltage->state : NAN;"
+  - platform: template
+    name: "L4 Power Import"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line4_power_import->state : NAN;"
+  - platform: template
+    name: "L4 Power Export"
+    unit_of_measurement: "W"
+    accuracy_decimals: 1
+    lambda: "return global_power_meter ? global_power_meter->line4_power_export->state : NAN;"
+  - platform: template
+    name: "L4 Energy Import"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line4_energy_import->state : NAN;"
+  - platform: template
+    name: "L4 Energy Export"
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    device_class: energy
+    state_class: total_increasing
+    lambda: "return global_power_meter ? global_power_meter->line4_energy_export->state : NAN;"
 
 time:
   - platform: sntp
